@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Labs - Centro de Treinamento e Simulação</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo">
+        <h1>Security <span class="accent-text">Labs</span></h1>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h2>Ambiente de Treinamento Prático</h2>
+      <p>Laboratórios de segurança interativos para exploração e mitigação de vulnerabilidades comuns do OWASP Top 10.</p>
+    </section>
+
+    <section class="labs-grid">
+      <!-- Lab 1: IDOR -->
+      <a href="/labs/idor/" class="lab-card">
+        <div class="lab-status active">Ativo</div>
+        <h3>IDOR</h3>
+        <p>Insecure Direct Object Reference. Manipule identificadores na API e aprenda a validar o controle de acessos em nível de objeto.</p>
+        <span class="lab-link-text">Iniciar Lab</span>
+      </a>
+
+      <!-- Lab 2: XSS (Fictício / Futuro) -->
+      <div class="lab-card disabled">
+        <div class="lab-status planned">Planejado</div>
+        <h3>XSS</h3>
+        <p>Cross-Site Scripting. Injete scripts maliciosos e explore defesas como CSP (Content Security Policy) e codificação de saídas.</p>
+        <span class="lab-link-text">Em breve</span>
+      </div>
+
+      <!-- Lab 3: SQLi (Fictício / Futuro) -->
+      <div class="lab-card disabled">
+        <div class="lab-status planned">Planejado</div>
+        <h3>SQL Injection</h3>
+        <p>Injeção SQL. Realize consultas arbitrárias no banco de dados e aprenda a usar parametrização (Prepared Statements) e ORMs.</p>
+        <span class="lab-link-text">Em breve</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Security Labs &bull; Fins Educacionais</p>
+  </footer>
+
+</body>
+</html>

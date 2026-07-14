@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDOR Lab - Tutorial Interativo de Segurança</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo">
+        <a href="/" class="back-link">Voltar aos Labs</a>
+        <h1>IDOR <span class="accent-text">Lab</span></h1>
+      </div>
+      <div class="session-manager" id="session-manager">
+        <span class="session-label">Simular Usuário:</span>
+        <button class="btn-user active" id="btn-user-1" onclick="loginAs(1)">
+          Alice (ID: 1)
+        </button>
+        <button class="btn-user" id="btn-user-2" onclick="loginAs(2)">
+          Bob (ID: 2)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid-layout">
+      <!-- Coluna da Esquerda: Teoria e Checklist -->
+      <section class="left-panel">
+        <div class="card card-theory">
+          <h2>O que é IDOR?</h2>
+          <p>
+            <strong>IDOR</strong> (<em>Insecure Direct Object Reference</em> - Referência Direta Insegura a Objetos) ocorre quando um sistema web expõe uma referência a um objeto de banco de dados interno ou arquivo sem realizar a verificação de autorização apropriada.
+          </p>
+          <p>
+            Um atacante pode manipular parâmetros de entrada (como IDs na URL ou corpo da requisição) para obter acesso não autorizado a dados confidenciais de outros usuários.
+          </p>
+        </div>
+
+        <div class="card card-checklist">
+          <h3>Roteiro do Laboratório</h3>
+          <ul class="checklist" id="checklist">
+            <li id="step-1" class="todo">
+              <span class="checkbox"></span>
+              <span class="step-text">Faça uma requisição no modo <strong>Vulnerável</strong> para obter a fatura de <strong>Alice (ID 101)</strong>.</span>
+            </li>
+            <li id="step-2" class="todo">
+              <span class="checkbox"></span>
+              <span class="step-text">Altere o ID na URL para <strong>102</strong> e tente ler o prontuário de <strong>Bob</strong>.</span>
+            </li>
+            <li id="step-3" class="todo">
+              <span class="checkbox"></span>
+              <span class="step-text">Mude a rota para <strong>Seguro</strong> e execute a requisição de Bob novamente.</span>
+            </li>
+            <li id="step-4" class="todo">
+              <span class="checkbox"></span>
+              <span class="step-text">Examine a diferença de código e aprenda a corrigir.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Coluna da Direita: Painel Interativo de Requisições e Código -->
+      <section class="right-panel">
+        <!-- Simulador HTTP -->
+        <div class="card card-sandbox">
+          <div class="card-header">
+            <h3>Simulador de Requisições API</h3>
+            <div class="endpoint-type-toggle">
+              <button id="toggle-vulnerable" class="toggle-btn active vuln" onclick="setMode('vulnerable')">Modo Vulnerável</button>
+              <button id="toggle-secure" class="toggle-btn sec" onclick="setMode('secure')">Modo Seguro</button>
+            </div>
+          </div>
+
+          <!-- Barra de URL do Simulador -->
+          <div class="browser-mockup">
+            <div class="browser-bar">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <div class="browser-url-input">
+                <span class="method-badge">GET</span>
+                <span class="domain-prefix">http://localhost:3000/api/idor/</span>
+                <span class="route-prefix" id="url-route-prefix">vulnerable</span>
+                <span class="route-slash">/documents/</span>
+                <input type="text" id="document-id-input" value="101" placeholder="ID">
+              </div>
+              <button class="btn-send" id="btn-send-request" onclick="sendSimulatedRequest()">Enviar</button>
+            </div>
+
+            <!-- Resposta do Servidor -->
+            <div class="response-panel">
+              <div class="response-header">
+                <span>Resposta do Servidor HTTP:</span>
+                <span class="status-badge status-none" id="response-status">---</span>
+              </div>
+              <pre class="response-body"><code id="response-output">// Clique em 'Enviar' para realizar a requisição HTTP</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visualizador de Código -->
+        <div class="card card-code">
+          <div class="card-header">
+            <h3>Visualizador de Código (Node.js/Express)</h3>
+            <div class="code-tabs">
+              <button id="tab-vulnerable" class="tab-btn active" onclick="showCodeTab('vulnerable')">Vulnerável</button>
+              <button id="tab-secure" class="tab-btn" onclick="showCodeTab('secure')">Seguro</button>
+            </div>
+          </div>
+          <div class="code-body">
+            <!-- Código Vulnerável -->
+            <pre id="code-vulnerable" class="code-content active"><code class="language-javascript"><span class="keyword">app</span>.<span class="function">get</span>(<span class="string">'/api/idor/vulnerable/documents/:id'</span>, <span class="variable">checkAuth</span>, (<span class="variable">req</span>, <span class="variable">res</span>) => {
+  <span class="keyword">const</span> <span class="variable">docId</span> = <span class="variable">parseDocumentId</span>(<span class="variable">req</span>.<span class="variable">params</span>.<span class="variable">id</span>);
+
+  <span class="keyword">if</span> (<span class="variable">docId</span> === <span class="keyword">null</span>) {
+    <span class="keyword">return</span> <span class="variable">res</span>.<span class="function">status</span>(<span class="number">400</span>).<span class="function">json</span>({ <span class="variable">error</span>: <span class="string">'ID inválido.'</span> });
+  }
+
+  <span class="keyword">const</span> <span class="variable">doc</span> = <span class="variable">documents</span>[<span class="variable">docId</span>];
+
+  <span class="keyword">if</span> (!<span class="variable">doc</span>) {
+    <span class="keyword">return</span> <span class="variable">res</span>.<span class="function">status</span>(<span class="number">404</span>).<span class="function">json</span>({ <span class="variable">error</span>: <span class="string">'Não encontrado.'</span> });
+  }
+
+  <span class="comment">// IDOR: Nenhuma validação se o documento pertence</span>
+  <span class="comment">// ao usuário autenticado na requisição (req.userId).</span>
+  <span class="variable">res</span>.<span class="function">json</span>({ <span class="variable">document</span>: <span class="variable">doc</span> });
+});</code></pre>
+
+            <!-- Código Seguro -->
+            <pre id="code-secure" class="code-content"><code class="language-javascript"><span class="keyword">app</span>.<span class="function">get</span>(<span class="string">'/api/idor/secure/documents/:id'</span>, <span class="variable">checkAuth</span>, (<span class="variable">req</span>, <span class="variable">res</span>) => {
+  <span class="keyword">const</span> <span class="variable">docId</span> = <span class="variable">parseDocumentId</span>(<span class="variable">req</span>.<span class="variable">params</span>.<span class="variable">id</span>);
+
+  <span class="keyword">if</span> (<span class="variable">docId</span> === <span class="keyword">null</span>) {
+    <span class="keyword">return</span> <span class="variable">res</span>.<span class="function">status</span>(<span class="number">400</span>).<span class="function">json</span>({ <span class="variable">error</span>: <span class="string">'ID inválido.'</span> });
+  }
+
+  <span class="keyword">const</span> <span class="variable">doc</span> = <span class="variable">documents</span>[<span class="variable">docId</span>];
+
+  <span class="keyword">if</span> (!<span class="variable">doc</span>) {
+    <span class="keyword">return</span> <span class="variable">res</span>.<span class="function">status</span>(<span class="number">404</span>).<span class="function">json</span>({ <span class="variable">error</span>: <span class="string">'Não encontrado.'</span> });
+  }
+
+  <span class="comment">// Validação se o proprietário do documento</span>
+  <span class="comment">// corresponde ao usuário logado na sessão (req.userId).</span>
+  <span class="keyword">if</span> (<span class="variable">doc</span>.<span class="variable">ownerId</span> !== <span class="variable">req</span>.<span class="variable">userId</span>) {
+    <span class="keyword">return</span> <span class="variable">res</span>.<span class="function">status</span>(<span class="number">403</span>).<span class="function">json</span>({
+      <span class="variable">error</span>: <span class="string">'Acesso Negado: Você não tem autorização.'</span>
+    });
+  }
+
+  <span class="variable">res</span>.<span class="function">json</span>({ <span class="variable">document</span>: <span class="variable">doc</span> });
+});</code></pre>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p>IDOR Lab &bull; Fins Educacionais</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
