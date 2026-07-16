@@ -22,6 +22,11 @@ security/
         ├── style.css     # Estilos específicos do simulador (Developer theme)
         ├── app.js        # Script de simulação de requisições
         └── routes.js     # API e dados simulados do laboratório
+    └── xss/              # Laboratório: Stored XSS
+        ├── index.html    # Frontend do simulador
+        ├── style.css     # Estilos específicos do simulador
+        ├── app.js        # Script de simulação de requisições
+        └── routes.js     # API e dados simulados do laboratório
 ```
 
 ---
@@ -31,6 +36,10 @@ security/
 ### 1. IDOR (Insecure Direct Object Reference)
 - **Caminho**: `/labs/idor/`
 - **Descrição**: Aprenda a explorar falhas onde IDs na URL ou corpo de requisições podem ser alterados para acessar dados sigilosos de outros usuários. Entenda a importância de validar a propriedade (controle de acesso a nível de objeto).
+
+### 2. XSS (Stored Cross-Site Scripting)
+- **Caminho**: `/labs/xss/`
+- **Descrição**: Aprenda a explorar e corrigir falhas de armazenamento e renderização insegura de comentários. O lab compara um fluxo vulnerável com outro seguro usando codificação de saída e renderização por `textContent`.
 
 ---
 
@@ -48,7 +57,7 @@ security/
 4. Acesse o painel central de laboratórios no seu navegador:
    [http://localhost:3000](http://localhost:3000)
 
-Use o painel para navegar para o laboratório de IDOR ativo.
+Use o painel para navegar entre os laboratórios de IDOR e XSS disponíveis.
 
 ---
 
