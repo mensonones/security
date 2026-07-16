@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XSS Lab - Tutorial Interativo de Segurança</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo">
+        <a href="/" class="back-link">Voltar aos Labs</a>
+        <h1>XSS <span class="accent-text">Lab</span></h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn-reset" id="btn-reset-db" onclick="resetDatabase()">
+          Resetar Dados
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid-layout">
+      <!-- Coluna da Esquerda: Teoria e Checklist -->
+      <section class="left-panel">
+        <div class="card card-theory">
+          <h2>O que é XSS (Stored)?</h2>
+          <p>
+            <strong>Stored XSS</strong> (Cross-Site Scripting Armazenado) ocorre quando um payload malicioso inserido por um usuário é armazenado permanentemente no servidor (banco de dados, arquivos, etc.) e posteriormente renderizado de forma insegura nas páginas visualizadas por outros visitantes.
+          </p>
+          <p>
+            Quando o navegador da vítima renderiza a página contendo o payload sem escapar caracteres especiais (como <code>&lt;</code> e <code>&gt;</code>), o script malicioso é interpretado e executado no contexto da sessão do usuário afetado.
+          </p>
+        </div>
+
+        <div class="card card-checklist">
+          <h3>Roteiro do Laboratório</h3>
+          <ul class="checklist" id="checklist">
+            <li id="step-1" class="todo">
+              <span class="checkbox"></span>
+              <span class="step-text">Envie um comentário comum no modo <strong>Vulnerável</strong> (ex: "Ótimo lab!").</span>
+            </li>
+            <li id="step-2" class="todo">
+              <span class="checkbox"></span>
+              <span class="step-text">Explore: Envie um payload XSS no comentário (ex: <code>&lt;img src=x onerror="triggerXSSAlert()"&gt;</code>) no modo <strong>Vulnerável</strong>.</span>
+            </li>
+            <li id="step-3" class="todo">
+              <span class="checkbox"></span>
+              <span class="step-text">Mude para o modo <strong>Seguro</strong> e envie o mesmo payload. Veja que o HTML é escapado e renderizado com segurança como texto.</span>
+            </li>
+            <li id="step-4" class="todo">
+              <span class="checkbox"></span>
+              <span class="step-text">Examine a diferença de código e aprenda a corrigir.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Coluna da Direita: Painel Interativo de Requisições, Mural e Código -->
+      <section class="right-panel">
+        <!-- Simulador HTTP -->
+        <div class="card card-sandbox">
+          <div class="card-header">
+            <h3>Simulador de Mural de Comentários</h3>
+            <div class="endpoint-type-toggle">
+              <button id="toggle-vulnerable" class="toggle-btn active vuln" onclick="setMode('vulnerable')">Modo Vulnerável</button>
+              <button id="toggle-secure" class="toggle-btn sec" onclick="setMode('secure')">Modo Seguro</button>
+            </div>
+          </div>
+
+          <!-- Formulário do Simulador -->
+          <div class="browser-mockup">
+            <div class="browser-bar">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <div class="browser-url-input">
+                <span class="method-badge">POST</span>
+                <span class="domain-prefix">http://localhost:3000/api/xss/</span>
+                <span class="route-prefix" id="url-route-prefix">vulnerable</span>
+                <span class="route-slash">/comments</span>
+              </div>
+            </div>
+
+            <!-- Interface Visual do Formulário -->
+            <div class="form-container">
+              <div class="form-group">
+                <label for="comment-author">Autor:</label>
+                <input type="text" id="comment-author" value="Alice Silva" placeholder="Seu nome">
+              </div>
+              <div class="form-group">
+                <label for="comment-text">Mensagem:</label>
+                <textarea id="comment-text" placeholder="Escreva seu comentário aqui..."></textarea>
+              </div>
+              <div class="form-actions">
+                <button class="btn-send" id="btn-submit-comment" onclick="submitComment()">Publicar Comentário</button>
+              </div>
+            </div>
+
+            <!-- Resposta do Servidor -->
+            <div class="response-panel">
+              <div class="response-header">
+                <span>Resposta do Servidor HTTP:</span>
+                <span class="status-badge status-none" id="response-status">---</span>
+              </div>
+              <pre class="response-body"><code id="response-output">// Envie um comentário para ver a resposta HTTP da API</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mural de Comentários Renderizado -->
+        <div class="card card-wall">
+          <h3>Mural de Comentários (Resultado na UI)</h3>
+          <p class="wall-desc">Como os comentários são renderizados na interface do usuário (DOM):</p>
+          <div id="comments-wall" class="comments-list">
+            <!-- Os comentários serão renderizados dinamicamente aqui -->
+            <div class="loading-placeholder">Carregando comentários...</div>
+          </div>
+        </div>
+
+        <!-- Visualizador de Código -->
+        <div class="card card-code">
+          <div class="card-header">
+            <h3>Visualizador de Código (Frontend DOM Rendering)</h3>
+            <div class="code-tabs">
+              <button id="tab-vulnerable" class="tab-btn active" onclick="showCodeTab('vulnerable')">Vulnerável</button>
+              <button id="tab-secure" class="tab-btn" onclick="showCodeTab('secure')">Seguro</button>
+            </div>
+          </div>
+          <div class="code-body">
+            <!-- Código Vulnerável -->
+            <pre id="code-vulnerable" class="code-content active"><code class="language-javascript"><span class="comment">// Renderização de Comentários - Modo Vulnerável</span>
+<span class="keyword">function</span> <span class="function">renderCommentsVuln</span>(<span class="variable">comments</span>) {
+  <span class="keyword">const</span> <span class="variable">wall</span> = <span class="variable">document</span>.<span class="function">getElementById</span>(<span class="string">'comments-wall'</span>);
+  <span class="variable">wall</span>.<span class="variable">innerHTML</span> = <span class="string">''</span>;
+
+  <span class="variable">comments</span>.<span class="function">forEach</span>(<span class="variable">comment</span> => {
+    <span class="keyword">const</span> <span class="variable">el</span> = <span class="variable">document</span>.<span class="function">createElement</span>(<span class="string">'div'</span>);
+    <span class="variable">el</span>.<span class="variable">className</span> = <span class="string">'comment-item'</span>;
+    
+    <span class="comment">// VULNERABILIDADE XSS: Uso de innerHTML com entrada de usuário</span>
+    <span class="comment">// permite que tags HTML e scripts injetados sejam executados diretamente.</span>
+    <span class="variable">el</span>.<span class="variable">innerHTML</span> = <span class="string">`
+      &lt;div class="comment-meta"&gt;
+        &lt;span class="comment-author"&gt;${comment.author}&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div class="comment-body"&gt;${comment.text}&lt;/div&gt;
+    `</span>;
+    <span class="variable">wall</span>.<span class="function">appendChild</span>(<span class="variable">el</span>);
+  });
+}</code></pre>
+
+            <!-- Código Seguro -->
+            <pre id="code-secure" class="code-content"><code class="language-javascript"><span class="comment">// Renderização de Comentários - Modo Seguro</span>
+<span class="keyword">function</span> <span class="function">renderCommentsSecure</span>(<span class="variable">comments</span>) {
+  <span class="keyword">const</span> <span class="variable">wall</span> = <span class="variable">document</span>.<span class="function">getElementById</span>(<span class="string">'comments-wall'</span>);
+  <span class="variable">wall</span>.<span class="variable">innerHTML</span> = <span class="string">''</span>;
+
+  <span class="variable">comments</span>.<span class="function">forEach</span>(<span class="variable">comment</span> => {
+    <span class="keyword">const</span> <span class="variable">el</span> = <span class="variable">document</span>.<span class="function">createElement</span>(<span class="string">'div'</span>);
+    <span class="variable">el</span>.<span class="variable">className</span> = <span class="string">'comment-item'</span>;
+
+    <span class="keyword">const</span> <span class="variable">meta</span> = <span class="variable">document</span>.<span class="function">createElement</span>(<span class="string">'div'</span>);
+    <span class="variable">meta</span>.<span class="variable">className</span> = <span class="string">'comment-meta'</span>;
+    
+    <span class="keyword">const</span> <span class="variable">authorSpan</span> = <span class="variable">document</span>.<span class="function">createElement</span>(<span class="string">'span'</span>);
+    <span class="variable">authorSpan</span>.<span class="variable">className</span> = <span class="string">'comment-author'</span>;
+    <span class="comment">// DEFESA: textContent escapa caracteres especiais e trata como texto literal</span>
+    <span class="variable">authorSpan</span>.<span class="variable">textContent</span> = <span class="variable">comment</span>.<span class="variable">author</span>;
+    <span class="variable">meta</span>.<span class="function">appendChild</span>(<span class="variable">authorSpan</span>);
+
+    <span class="keyword">const</span> <span class="variable">body</span> = <span class="variable">document</span>.<span class="function">createElement</span>(<span class="string">'div'</span>);
+    <span class="variable">body</span>.<span class="variable">className</span> = <span class="string">'comment-body'</span>;
+    <span class="comment">// DEFESA: textContent previne a execução de códigos injetados (evita XSS)</span>
+    <span class="variable">body</span>.<span class="variable">textContent</span> = <span class="variable">comment</span>.<span class="variable">text</span>;
+
+    <span class="variable">el</span>.<span class="function">appendChild</span>(<span class="variable">meta</span>);
+    <span class="variable">el</span>.<span class="function">appendChild</span>(<span class="variable">body</span>);
+    <span class="variable">wall</span>.<span class="function">appendChild</span>(<span class="variable">el</span>);
+  });
+}</code></pre>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal customizado para notificação de XSS bem-sucedido -->
+  <div id="xss-alert-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-icon">⚠️</div>
+      <h3>XSS Executado!</h3>
+      <p>O script injetado foi executado com sucesso no navegador da vítima!</p>
+      <div class="modal-payload">
+        <strong>Payload executado:</strong>
+        <code id="executed-payload-code">alert("XSS")</code>
+      </div>
+      <button class="btn-close-modal" onclick="closeXssModal()">Fechar</button>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <p>XSS Lab &bull; Fins Educacionais</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

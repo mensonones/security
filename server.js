@@ -2,6 +2,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const idorRoutes = require('./labs/idor/routes');
+const xssRoutes = require('./labs/xss/routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,7 +20,9 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/idor', idorRoutes);
+app.use('/api/xss', xssRoutes);
 app.use('/labs/idor', express.static(path.join(__dirname, 'labs/idor')));
+app.use('/labs/xss', express.static(path.join(__dirname, 'labs/xss')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Inicia o servidor
